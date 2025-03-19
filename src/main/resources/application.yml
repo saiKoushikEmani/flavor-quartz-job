@@ -1,0 +1,23 @@
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/flavordistributorapp?createDatabaseIfNotExist=true
+    username: root
+    password: root
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  application:
+    name: flavor-quartz-job
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+        initialize-schema: always
+    properties:
+      class: org.quartz.impl.jdbcjobstore.JobStoreTX
+      driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
