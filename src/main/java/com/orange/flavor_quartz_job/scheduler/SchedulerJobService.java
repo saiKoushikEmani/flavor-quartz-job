@@ -1,4 +1,4 @@
-package com.orange.flavor_quartz_job.service;
+package com.orange.flavor_quartz_job.scheduler;
 
 import com.orange.flavor_quartz_job.entity.SchedulerJobInfo;
 import com.orange.flavor_quartz_job.jobs.SimpleJob;
@@ -70,20 +70,11 @@ public class SchedulerJobService {
                         jobInfo.getJobName(), jobInfo.getJobGroup());
 
                 Trigger trigger;
-//                if (jobInfo.getCronJob()) {
-//                    trigger = scheduleCreator.createCronTrigger(
-//                            jobInfo.getJobName(),
-//                            new Date(),
-//                            jobInfo.getCronExpression(),
-//                            SimpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
-//                } else {
                 trigger = scheduleCreator.createSimpleTrigger(
                         jobInfo.getJobName(),
                         new Date(),
                         jobInfo.getRepeatTime(),
-
                         SimpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
-//                }
                 scheduler.scheduleJob(jobDetail, trigger);
                 jobInfo.setJobStatus("SCHEDULED");
                 schedulerRepository.save(jobInfo);
@@ -100,21 +91,11 @@ public class SchedulerJobService {
 
     private void updateScheduleJob(SchedulerJobInfo jobInfo) {
         Trigger newTrigger;
-//        if (jobInfo.getCronJob()) {
-//
-//            newTrigger = scheduleCreator.createCronTrigger(
-//                    jobInfo.getJobName(),
-//                    new Date(),
-//                    jobInfo.getCronExpression(),
-//                    simpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
-//        } else {
-
         newTrigger = scheduleCreator.createSimpleTrigger(
                 jobInfo.getJobName(),
                 new Date(),
                 jobInfo.getRepeatTime(),
                 SimpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
-//        }
         try {
             schedulerFactoryBean.getScheduler().rescheduleJob(TriggerKey.triggerKey(jobInfo.getJobName()), newTrigger);
             jobInfo.setJobStatus("EDITED & SCHEDULED");

@@ -12,14 +12,11 @@ public class SimpleJob extends QuartzJobBean {
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
         log.info("SimpleJob Start................");
-//        IntStream.range(0, 5).forEach(i -> {
-//            log.info("Counting - {}", i);
-//            try {
-//                Thread.sleep(1000);
-//            } catch (InterruptedException e) {
-//                log.error(e.getMessage(), e);
-//            }
-//        });
-        log.info("SimpleJob End................");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        log.info("SimpleJob End....Notification Sent successfully ............");
     }
 }
