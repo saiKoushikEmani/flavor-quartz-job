@@ -1,6 +1,7 @@
 package com.orange.flavor_quartz_job.scheduler;
 
 import com.orange.flavor_quartz_job.entity.ClientInfo;
+import com.orange.flavor_quartz_job.jobs.SimpleJob;
 import com.orange.flavor_quartz_job.model.request.ClientInfoRequest;
 import com.orange.flavor_quartz_job.model.request.ScheduleNotification;
 import com.orange.flavor_quartz_job.util.ClientInfoUtil;
@@ -38,7 +39,9 @@ public class JobScheduleCreator {
         ScheduleNotification scheduleNotification = clientInfo.getScheduleNotification();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(Objects.requireNonNull(ClientInfoUtil.convertStringToDate(lastOrderDate)));
-        calendar.add(Calendar.DAY_OF_YEAR, scheduleNotification.getNoOfDaysAfterToReminder());
+//        calendar.add(Calendar.DAY_OF_YEAR, scheduleNotification.getNoOfDaysAfterToReminder());
+//        For testing
+        calendar.add(Calendar.MINUTE, scheduleNotification.getNoOfDaysAfterToReminder());
         Date triggerStartTime = calendar.getTime();
         long repeatIntervalMillis = getRepeatIntervalInMillis(scheduleNotification);
         SimpleTriggerFactoryBean factoryBean = new SimpleTriggerFactoryBean();
@@ -46,7 +49,7 @@ public class JobScheduleCreator {
         factoryBean.setStartTime(triggerStartTime);
         factoryBean.setRepeatInterval(repeatIntervalMillis);
         factoryBean.setRepeatCount(scheduleNotification.getRepeatCount());
-        factoryBean.setMisfireInstruction(SimpleTrigger.MISFIRE_INSTRUCTION_FIRE_NOW);
+        factoryBean.setMisfireInstruction(SimpleTrigger.MISFIRE_INSTRUCTION_RESCHEDULE_NOW_WITH_EXISTING_REPEAT_COUNT);
         factoryBean.afterPropertiesSet();
         return factoryBean.getObject();
     }
@@ -58,8 +61,29 @@ public class JobScheduleCreator {
             case HOURS -> repeatInterval * 60 * 60 * 1000L; // Convert hours to milliseconds
             case MINUTES -> repeatInterval * 60 * 1000L; // Convert minutes to milliseconds
             case SECONDS -> repeatInterval * 1000L; // Convert seconds to milliseconds
-            default -> throw new IllegalArgumentException("Unsupported ChronoUnit: " + scheduleNotification.getRepeatIntervelUnit());
+            default ->
+                    throw new IllegalArgumentException("Unsupported ChronoUnit: " + scheduleNotification.getRepeatIntervelUnit());
         };
+    }
+
+    public JobDetail createJob(ClientInfoRequest clientInfo, boolean isDurable,
+                               ApplicationContext context) {
+        JobDetailFactoryBean factoryBean = new JobDetailFactoryBean();
+        factoryBean.setJobClass(SimpleJob.class);
+        factoryBean.setDurability(isDurable);
+        factoryBean.setApplicationContext(context);
+        factoryBean.setName(clientInfo.getJobName());
+        factoryBean.setGroup(clientInfo.getJobGroup());
+
+        // Set job data map
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put("jobName", clientInfo.getJobName());
+        jobDataMap.put("clientId", clientInfo.getClientId());
+        jobDataMap.put("maxRetry", clientInfo.getScheduleNotification().getRepeatCount());
+
+        factoryBean.setJobDataMap(jobDataMap);
+        factoryBean.afterPropertiesSet();
+        return factoryBean.getObject();
     }
 
     public JobDetail createJob(Class<? extends QuartzJobBean> jobClass, boolean isDurable,
@@ -73,7 +97,7 @@ public class JobScheduleCreator {
 
         // Set job data map
         JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(jobName + jobGroup, jobClass.getName());
+        jobDataMap.put("jobName", jobName);
         factoryBean.setJobDataMap(jobDataMap);
         factoryBean.afterPropertiesSet();
         return factoryBean.getObject();

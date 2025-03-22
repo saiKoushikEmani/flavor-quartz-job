@@ -17,6 +17,7 @@ public class ClientInfo {
     @Column(unique = true, nullable = false)
     private String clientId;
     private String name;
+    @Column(unique = true, nullable = false)
     private String jobName;
     private String jobGroup;
     private String jobStatus;
